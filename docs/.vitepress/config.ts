@@ -21,6 +21,14 @@ export default defineConfig({
 
     sidebar: [
       {
+        text: 'Payout',
+        items: [
+          {text: 'Bienvenido', link: '/payout'},
+          {text: 'Flujo', link: '/payout/flow' },
+          {text: 'Diccionario de datos', link: '/payout/dictionary'}
+        ]
+      },
+      {
         text: 'Operaciones',
         items: [
           ...sidebar.generateSidebarGroups(),

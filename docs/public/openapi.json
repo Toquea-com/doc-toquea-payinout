@@ -1,131 +1,68 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Argentine Rock Legends",
-    "description": "The Argentine Rock Legends is an example OpenAPI specification to test OpenAPI tools and libraries. Get all the data for [all artists](#getAllArtists).\n\n>Inspired by [Scalar Galaxy](https://galaxy.scalar.com/)\n\n## Resources\n\n* https://github.com/enzonotario/vitepress-openapi\n* https://github.com/OAI/OpenAPI-Specification\n\n## Markdown Support\n\nAll descriptions *can* contain ~~tons of text~~ **Markdown**. [If GitHub supports the syntax](https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax), chances are we’re supporting it, too. You can even create [internal links to reference endpoints](#createArtist).\n\n<details>\n  <summary>Examples</summary>\n\n  **Blockquotes**\n\n  > I love Argentine Rock. <3\n\n  **Tables**\n\n  | Feature          | Availability |\n  | ---------------- | ------------ |\n  | Markdown Support | ✓            |\n\n  **Accordion**\n\n  ```html\n  <details>\n    <summary>Using Details Tags</summary>\n    <p>HTML Example</p>\n  </details>\n  ```\n\n  **Images**\n\n  Yes, there’s support for images, too!\n\n  ![Placeholder image](https://images.placeholders.dev/?width=1280&height=720)\n\n</details>\n",
-    "version": "1.0.0",
-    "contact": {
-      "name": "Enzo Notario",
-      "url": "https://enzonotario.me",
-      "email": "hi@enzonotario.me"
-    }
+    "title": "Pay in/out Toquea API",
+    "description": "API para iniciar procesos de payout y payin para la plataforma de toquea",
+    "version": "0.1.0"
   },
-  "servers": [
-    {
-      "url": "https://stoplight.io/mocks/enzonotario/argentine-rock/122547792",
-      "description": "Mock Server"
-    }
-  ],
-  "security": [
-    {
-      "bearerAuth": []
-    },
-    {
-      "apiKeyHeader": []
-    }
-  ],
   "tags": [
     {
-      "name": "Authentication",
-      "description": "Some endpoints are public, but some require authentication. We provide all the required endpoints to create an account and authorize yourself."
+      "name": "Payin",
+      "description": "Endpoints diseñados para iniciar los flujos de recaudación de dinero"
     },
     {
-      "name": "Artists",
-      "description": "Everything about Argentine Rock artists"
+      "name": "Payout",
+      "description": "Endpoints diseñados para iniciar los flujos de distribución de dinero"
     }
   ],
   "paths": {
-    "/api/v1/artists": {
-      "get": {
-        "tags": [
-          "Artists"
-        ],
-        "summary": "Get all artists",
-        "description": "Get a list of all legendary Argentine Rock artists and explore their contributions to the music scene.",
-        "operationId": "getAllArtists",
-        "security": [
-          {}
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/limit"
-          },
-          {
-            "$ref": "#/components/parameters/offset"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/Artist"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "$ref": "#/components/schemas/PaginatedResource"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
+    "/payout": {
       "post": {
         "tags": [
-          "Artists"
+          "Payout"
         ],
-        "summary": "Add a new artist",
-        "description": "Add a new legendary Argentine Rock artist. Make sure they truly deserve the title!",
-        "operationId": "createArtist",
+        "summary": "Crea solicitud de pago",
+        "operationId": "createPayout",
         "requestBody": {
-          "description": "Artist data",
+          "required": true,
+          "description": "Descripción de la solicitud de pago",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Artist"
+                "$ref": "#/components/schemas/PayoutRequest"
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Created",
+            "description": "Solicitud iniciada con exito",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Artist"
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "success"
+                    }
+                  }
                 }
               }
             }
           },
           "400": {
-            "description": "Bad Request",
+            "description": "Error en la solicitud",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Invalid input"
+                    }
+                  }
                 }
               }
             }
@@ -133,296 +70,83 @@
         }
       }
     },
-    "/api/v1/artists/{artistId}": {
+    "/payout/{id}": {
       "get": {
         "tags": [
-          "Artists"
+          "Payout"
         ],
-        "summary": "Get an artist",
-        "description": "Learn more about a specific Argentine Rock artist and their legacy.",
-        "operationId": "getArtist",
-        "security": [
-          {}
-        ],
+        "summary": "Obtiener detalle de una Payout",
+        "operationId": "getPayout",
         "parameters": [
           {
-            "$ref": "#/components/parameters/artistId"
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Identificador único del payout",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
           }
         ],
         "responses": {
           "200": {
-            "description": "Artist Found",
+            "description": "Detalle del payout encontrado",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Artist"
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "example": "abc123"
+                    },
+                    "customId": {
+                      "type": ["string", "null"],
+                      "example": "123456789"
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": ["PENDING","SUCCESS","REJECTED"],
+                      "example": "PENDING"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado: token inválido o acceso a recurso no permitido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Unauthorized"
+                    }
+                  }
                 }
               }
             }
           },
           "404": {
-            "description": "Artist Not Found",
+            "description": "No se encontró la solicitud de payout",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Artists"
-        ],
-        "summary": "Update an artist",
-        "description": "Update the information of a legendary Argentine Rock artist. Make sure to provide accurate data.",
-        "operationId": "updateArtist",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/artistId"
-          }
-        ],
-        "requestBody": {
-          "description": "Artist data",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Artist"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Artist"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Artists"
-        ],
-        "summary": "Delete an artist",
-        "operationId": "deleteArtist",
-        "description": "This endpoint was used to delete artists. Unfortunately, that caused a lot of controversy. So, this endpoint is now deprecated and should not be used anymore.",
-        "deprecated": true,
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/artistId"
-          }
-        ],
-        "responses": {
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/artists/{artistId}/albums": {
-      "get": {
-        "tags": [
-          "Artists"
-        ],
-        "summary": "Get all albums",
-        "description": "Get a list of all albums from a legendary Argentine Rock artist.",
-        "operationId": "getAllAlbums",
-        "security": [
-          {}
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/artistId"
-          },
-          {
-            "$ref": "#/components/parameters/limit"
-          },
-          {
-            "$ref": "#/components/parameters/offset"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "allOf": [
-                    {
-                      "type": "object",
-                      "properties": {
-                        "data": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/Album"
-                          }
-                        }
-                      }
-                    },
-                    {
-                      "$ref": "#/components/schemas/PaginatedResource"
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Payout not found"
                     }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Artists"
-        ],
-        "summary": "Add a new album",
-        "description": "Add a new album to a legendary Argentine Rock artist. Make sure it’s a masterpiece!",
-        "operationId": "createAlbum",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/artistId"
-          }
-        ],
-        "requestBody": {
-          "description": "Album data",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Album"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Album"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/user/signup": {
-      "post": {
-        "tags": [
-          "Authentication"
-        ],
-        "summary": "Create a user",
-        "description": "Create a user account to access exclusive content about Argentine Rock legends.",
-        "operationId": "createUser",
-        "security": [
-          {}
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewUser"
-              },
-              "examples": {
-                "Carlos": {
-                  "value": {
-                    "name": "Carlos",
-                    "email": "carlos@rock-legends.com",
-                    "password": "i-love-rock"
                   }
-                },
-                "Maria": {
-                  "value": {
-                    "name": "Maria",
-                    "email": "maria@rock-legends.com",
-                    "password": "rock-n-roll"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/User"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -435,297 +159,180 @@
     "securitySchemes": {
       "bearerAuth": {
         "type": "http",
-        "scheme": "bearer"
-      },
-      "apiKeyHeader": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-API-Key"
-      }
-    },
-    "parameters": {
-      "artistId": {
-        "name": "artistId",
-        "in": "path",
-        "required": true,
-        "schema": {
-          "type": "integer",
-          "format": "int64",
-          "examples": [
-            1
-          ]
-        }
-      },
-      "limit": {
-        "name": "limit",
-        "in": "query",
-        "description": "The number of items to return",
-        "required": false,
-        "schema": {
-          "type": "integer",
-          "format": "int64",
-          "default": 10
-        }
-      },
-      "offset": {
-        "name": "offset",
-        "in": "query",
-        "description": "The number of items to skip before starting to collect the result set",
-        "required": false,
-        "schema": {
-          "type": "integer",
-          "format": "int64",
-          "default": 0
-        }
-      }
-    },
-    "responses": {
-      "BadRequest": {
-        "description": "Bad Request",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      },
-      "Forbidden": {
-        "description": "Forbidden",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      },
-      "NotFound": {
-        "description": "NotFound",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
       }
     },
     "schemas": {
-      "NewUser": {
+      "PayoutRequest": {
         "type": "object",
         "required": [
-          "name",
-          "email",
-          "password"
+          "country",
+          "amount",
+          "currency",
+          "customId",
+          "beneficiary"
         ],
         "properties": {
-          "name": {
+          "country": {
             "type": "string",
-            "examples": [
-              "Carlos",
-              "Maria"
-            ]
+            "maxLength": 2,
+            "example": "PE"
           },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "examples": [
-              "carlos@rock-legends.com",
-              "maria@rock-legends.com"
-            ]
+          "amount": {
+            "type": "number",
+            "format": "float",
+            "example": 100.50,
+            "description": "Monto a retirar dependiendo de la moneda puede o no tener decimales"
           },
-          "password": {
+          "currency": {
             "type": "string",
-            "minLength": 8,
-            "examples": [
-              "i-love-rock",
-              "rock-n-roll"
-            ]
-          }
-        }
-      },
-      "User": {
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "email"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64",
-            "examples": [
-              1
-            ]
-          },
-          "name": {
-            "type": "string",
-            "examples": [
-              "Carlos"
-            ]
-          },
-          "email": {
-            "type": "string",
-            "format": "email",
-            "examples": [
-              "carlos@rock-legends.com"
-            ]
-          }
-        }
-      },
-      "Artist": {
-        "type": "object",
-        "required": [
-          "id",
-          "name"
-        ],
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64",
-            "examples": [
-              1
-            ],
-            "x-variable": "artistId"
-          },
-          "name": {
-            "type": "string",
-            "examples": [
-              "Charly García"
-            ]
+            "maxLength": 3,
+            "example": "PEN",
+            "enum": ["PEN","USD"],
+            "description": "Código de la moneda en la que deseo hacer el retiro"
           },
           "description": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "examples": [
-              "One of the most influential rock musicians in Argentine history."
-            ]
-          },
-          "image": {
             "type": "string",
-            "nullable": true,
-            "examples": [
-              "https://cdn.rock-legends.com/photos/charly.jpg"
-            ]
+            "maxLength": 255,
+            "description": "Texto libre para agregar datos a la solicitud en formato de texto",
+            "example": "Pago por servicio"
           },
-          "band": {
+          "customId": {
             "type": "string",
-            "examples": [
-              "Sui Generis"
-            ]
+            "maxLength": 255,
+            "description": "Código de operación definido por quien integre a toquea como parner, este dato puede ser nulo y se recomienda que sea único por operación",
+            "example": "123456789"
+          },
+          "beneficiary": {
+            "$ref": "#/components/schemas/BeneficiaryPayout"
           }
         }
       },
-      "Album": {
+      "BeneficiaryPayout": {
         "type": "object",
+        "description": "Datos referidos al beneficiaro final del deposito",
         "required": [
-          "id",
-          "name"
+          "customId",
+          "name",
+          "lastName",
+          "document",
+          "destinationAccount"
         ],
         "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64",
-            "examples": [
-              1
-            ]
-          },
           "name": {
             "type": "string",
-            "examples": [
-              "La Máquina de Hacer Pájaros"
-            ]
+            "maxLength": 150,
+            "example": "Juan"
           },
-          "year": {
-            "type": "integer",
-            "format": "int64",
-            "examples": [
-              1976
-            ]
-          },
-          "image": {
+          "lastName": {
             "type": "string",
-            "nullable": true,
-            "examples": [
-              "https://cdn.rock-legends.com/photos/la-maquina.jpg"
-            ]
+            "maxLength": 150,
+            "example": "Pérez"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 200,
+            "example": "juan.perez@example.com"
+          },
+          "document": {
+            "$ref": "#/components/schemas/IdentificationDocument"
+          },
+          "destinationAccount": {
+            "$ref": "#/components/schemas/DestinationAccount"
           }
         }
       },
-      "PaginatedResource": {
+      "IdentificationDocument": {
         "type": "object",
-        "properties": {
-          "meta": {
-            "type": "object",
-            "properties": {
-              "limit": {
-                "type": "integer",
-                "format": "int64",
-                "examples": [
-                  10
-                ]
-              },
-              "offset": {
-                "type": "integer",
-                "format": "int64",
-                "examples": [
-                  0
-                ]
-              },
-              "total": {
-                "type": "integer",
-                "format": "int64",
-                "examples": [
-                  100
-                ]
-              },
-              "next": {
-                "type": [
-                  "string",
-                  "null"
-                ],
-                "examples": [
-                  "/artists?limit=10&offset=10"
-                ]
-              }
-            }
-          }
-        }
-      },
-      "Error": {
-        "type": "object",
-        "description": "RFC 7807 (https://datatracker.ietf.org/doc/html/rfc7807)",
+        "description": "Documentos del usuario",
+        "required": [
+          "type",
+          "number"
+        ],
         "properties": {
           "type": {
             "type": "string",
-            "examples": [
-              "https://example.com/errors/generic-error"
-            ]
+            "example": "pe-dni"
           },
-          "title": {
+          "number": {
             "type": "string",
-            "examples": [
-              "Something went wrong here."
-            ]
-          },
-          "status": {
-            "type": "integer",
-            "format": "int64",
-            "examples": [
-              403
-            ]
-          },
-          "detail": {
-            "type": "string",
-            "examples": [
-              "Unfortunately, we can’t provide further information."
-            ]
+            "example": "12345678"
           }
         }
+      },
+      "DestinationAccount": {
+        "type": "object",
+        "description": "Información sobre el destino final del dinero, puede ser una cuenta bancaria o billetera digital",
+        "required": [
+          "bank",
+          "accountType",
+          "accountNumber"
+        ],
+        "properties": {
+          "bank": {
+            "$ref": "#/components/schemas/BankCode"
+          },
+          "accountType": {
+            "$ref": "#/components/schemas/AccountType"
+          },
+          "accountNumber": {
+            "type": "string",
+            "example": "12345678901234567890"
+          }
+        }
+      },
+      "AccountType": {
+        "type": "string",
+        "enum": [
+          "CurrentAccount",
+          "SavingsAccount",
+          "CellphoneNumber"
+        ]
+      },
+      "BankCode": {
+        "type": "string",
+        "enum": [
+          "PE-BBVA",
+          "PE-BCP",
+          "PE-INTER",
+          "PE-SCOTIA",
+          "PE-COMERCIO",
+          "PE-BANBIF",
+          "PE-PICHINCHA",
+          "PE-CITI",
+          "PE-GNB",
+          "PE-SANTANDER",
+          "PE-CENCOSUD",
+          "PE-ICBC",
+          "PE-NACION",
+          "PE-C.AREQUIPA",
+          "PE-C.CUSCO",
+          "PE-C.HUANCAYO",
+          "PE-C.MAYNAS",
+          "PE-C.METRO",
+          "PE-C.ICA",
+          "PE-C.SULLA",
+          "PE-C.TACNA",
+          "PE-C.TRUJI",
+          "PE-FALABELLA",
+          "PE-C.ANDES",
+          "PE-MIBANCO",
+          "PE-C.PIURA",
+          "PE-RIPLEY",
+          "PE-F.EFECTIVA",
+          "PE-YAPE",
+          "PE-F.COMPARTAMOS",
+          "PE-ALFIN",
+          "PE-PLIN",
+          "PE-C.ABACO",
+          "PE-LIGO",
+          "PE-F.CONFIANZA",
+          "PE-PREX",
+          "PE-T.OH",
+          "PE-CREDISCOTIA",
+          "PE-DALE"
+        ]
       }
     }
   }
