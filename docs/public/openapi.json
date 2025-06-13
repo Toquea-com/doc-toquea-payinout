@@ -16,33 +16,164 @@
     }
   ],
   "paths": {
-    "/payout": {
+    "/payment/payout": {
       "post": {
-        "tags": [
-          "Payout"
+        "parameters": [
+          {
+            "name": "x-merchant-id",
+            "in": "header",
+            "description": "Merchant identifier",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
         ],
-        "summary": "Crea solicitud de pago",
-        "operationId": "createPayout",
+        "summary": "Create a new payout",
+        "description": "Creates a new payout based on the provided request data.",
         "requestBody": {
-          "required": true,
-          "description": "Descripción de la solicitud de pago",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PayoutRequest"
+                "$ref": "#/components/schemas/CreatePayoutRequestDto",
+                "example": {
+                  "customId": "new-identifier",
+                  "amount": 100000,
+                  "currency": "PEN",
+                  "beneficiary": {
+                    "name": "Sergio",
+                    "surname": "test",
+                    "documentType": 1,
+                    "documentNumber": "12345678",
+                    "emailAddress": "sergio.test@dispostable.com"
+                  },
+                  "destination": {
+                    "bank": "002",
+                    "accountType": "1",
+                    "cci": "00243000584290204477"
+                  }
+                }
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "201": {
-            "description": "Solicitud iniciada con exito",
+            "description": "Payout successfully created.",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "status": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CreateMonnetPayoutResponseDto"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Payout"
+        ]
+      }
+    },
+    "/payment/payout/{id}": {
+      "get": {
+        "summary": "Get payout by ID",
+        "description": "Retrieves a payout by its unique identifier.",
+        "parameters": [
+          {
+            "name": "x-merchant-id",
+            "in": "header",
+            "description": "Merchant identifier",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "description": "Unique identifier of the payout",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payout successfully retrieved.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        },
+                        "data": {
+                          "$ref": "#/components/schemas/GetPayoutByIdResponseDto"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Payout"
+        ]
+      }
+    }
+  },
+  "webhooks": {
+    "/payment/payout/webhook": {
+      "post": {
+        "summary": "Webhook to update the payment status",
+        "description": "This endpoint receives a webhook with payment information and updates its status in the database.",
+        "parameters": [
+          {
+            "name": "verification",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
                       "type": "string",
                       "example": "success"
                     }
@@ -50,108 +181,11 @@
                 }
               }
             }
-          },
-          "400": {
-            "description": "Error en la solicitud",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Invalid input"
-                    }
-                  }
-                }
-              }
-            }
           }
-        }
-      }
-    },
-    "/payout/{id}": {
-      "get": {
+        },
         "tags": [
           "Payout"
-        ],
-        "summary": "Obtiener detalle de una Payout",
-        "operationId": "getPayout",
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "description": "Identificador único del payout",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "security": [
-          {
-            "bearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Detalle del payout encontrado",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "example": "abc123"
-                    },
-                    "customId": {
-                      "type": ["string", "null"],
-                      "example": "123456789"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": ["PENDING","SUCCESS","REJECTED"],
-                      "example": "PENDING"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No autorizado: token inválido o acceso a recurso no permitido",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Unauthorized"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No se encontró la solicitud de payout",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string",
-                      "example": "Payout not found"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+        ]
       }
     }
   },
@@ -164,175 +198,465 @@
       }
     },
     "schemas": {
-      "PayoutRequest": {
+      "BeneficiaryDto": {
         "type": "object",
         "required": [
-          "country",
-          "amount",
-          "currency",
-          "customId",
-          "beneficiary"
-        ],
-        "properties": {
-          "country": {
-            "type": "string",
-            "maxLength": 2,
-            "example": "PE"
-          },
-          "amount": {
-            "type": "number",
-            "format": "float",
-            "example": 100.50,
-            "description": "Monto a retirar dependiendo de la moneda puede o no tener decimales"
-          },
-          "currency": {
-            "type": "string",
-            "maxLength": 3,
-            "example": "PEN",
-            "enum": ["PEN","USD"],
-            "description": "Código de la moneda en la que deseo hacer el retiro"
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 255,
-            "description": "Texto libre para agregar datos a la solicitud en formato de texto",
-            "example": "Pago por servicio"
-          },
-          "customId": {
-            "type": "string",
-            "maxLength": 255,
-            "description": "Código de operación definido por quien integre a toquea como parner, este dato puede ser nulo y se recomienda que sea único por operación",
-            "example": "123456789"
-          },
-          "beneficiary": {
-            "$ref": "#/components/schemas/BeneficiaryPayout"
-          }
-        }
-      },
-      "BeneficiaryPayout": {
-        "type": "object",
-        "description": "Datos referidos al beneficiaro final del deposito",
-        "required": [
-          "customId",
           "name",
-          "lastName",
-          "document",
-          "destinationAccount"
+          "surname",
+          "documentType",
+          "documentNumber",
+          "emailAddress"
         ],
         "properties": {
           "name": {
-            "type": "string",
-            "maxLength": 150,
-            "example": "Juan"
+            "type": "string"
           },
-          "lastName": {
-            "type": "string",
-            "maxLength": 150,
-            "example": "Pérez"
+          "surname": {
+            "type": "string"
           },
-          "email": {
-            "type": "string",
-            "maxLength": 200,
-            "example": "juan.perez@example.com"
+          "documentType": {
+            "type": "string"
           },
-          "document": {
-            "$ref": "#/components/schemas/IdentificationDocument"
+          "documentNumber": {
+            "type": "string"
           },
-          "destinationAccount": {
-            "$ref": "#/components/schemas/DestinationAccount"
+          "emailAddress": {
+            "type": "string"
           }
         }
       },
-      "IdentificationDocument": {
+      "CreateMonnetPayoutResponseDto": {
         "type": "object",
-        "description": "Documentos del usuario",
+        "properties": {
+          "payout": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Payout"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "output": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Output"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "CreatePayoutRequestDto": {
+        "type": "object",
         "required": [
-          "type",
+          "currency",
+          "beneficiary",
+          "destination"
+        ],
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "beneficiary": {
+            "$ref": "#/components/schemas/BeneficiaryDto"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/DestinationDto"
+          }
+        }
+      },
+      "DestinationDto": {
+        "type": "object",
+        "required": [
+          "bank",
+          "accountType",
+          "cci"
+        ],
+        "properties": {
+          "bank": {
+            "type": "string"
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "cci": {
+            "type": "string"
+          }
+        }
+      },
+      "GetPayoutByIdResponseDto": {
+        "type": "object",
+        "required": [
+          "id",
+          "orderId",
+          "currency",
+          "status",
+          "createdAt",
+          "beneficiary",
+          "destination",
+          "monnetPayoutId"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PayoutStatus"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "beneficiary": {
+            "$ref": "#/components/schemas/BeneficiaryDto"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/DestinationDto"
+          },
+          "monnetPayoutId": {
+            "type": "string"
+          }
+        }
+      },
+      "Output": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statusChangeDateTime": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "Payout": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "amount": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int32"
+          },
+          "currency": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orderId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "PayoutStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "SUCCESS",
+          "REJECTED"
+        ]
+      },
+      "AddressDto": {
+        "type": "object",
+        "properties": {
+          "street": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "houseNumber": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "additionalInfo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "province": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "country": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "zipCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "BankAccountDto": {
+        "type": "object",
+        "required": [
+          "bankCode",
+          "accountType",
+          "cci"
+        ],
+        "properties": {
+          "bankCode": {
+            "type": "string"
+          },
+          "accountType": {
+            "type": "string"
+          },
+          "cci": {
+            "type": "string"
+          },
+          "clabe": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cbu": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "location": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AddressDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "CreateMonnetPayoutRequestDto": {
+        "type": "object",
+        "required": [
+          "country",
+          "currency",
+          "orderId",
+          "beneficiary",
+          "destination"
+        ],
+        "properties": {
+          "country": {
+            "type": "string"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "orderId": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "beneficiary": {
+            "$ref": "#/components/schemas/BeneficiaryDto"
+          },
+          "destination": {
+            "$ref": "#/components/schemas/DestinationDto"
+          },
+          "subMerchantInfo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SubMerchantInfoDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "DocumentDto": {
+        "type": "object",
+        "required": [
           "number"
         ],
         "properties": {
           "type": {
-            "type": "string",
-            "example": "pe-dni"
+            "type": "integer",
+            "format": "int32"
           },
           "number": {
-            "type": "string",
-            "example": "12345678"
+            "type": "string"
           }
         }
       },
-      "DestinationAccount": {
+      "SubMerchantInfoDto": {
         "type": "object",
-        "description": "Información sobre el destino final del dinero, puede ser una cuenta bancaria o billetera digital",
+        "properties": {
+          "code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "url": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ApiResponse": {
+        "type": "object",
         "required": [
-          "bank",
-          "accountType",
-          "accountNumber"
+          "message"
         ],
         "properties": {
-          "bank": {
-            "$ref": "#/components/schemas/BankCode"
+          "message": {
+            "type": "string"
           },
-          "accountType": {
-            "$ref": "#/components/schemas/AccountType"
+          "data": {}
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
           },
-          "accountNumber": {
-            "type": "string",
-            "example": "12345678901234567890"
+          "message": {
+            "type": "string"
           }
         }
       },
-      "AccountType": {
+      "MonnetPayoutStage": {
         "type": "string",
         "enum": [
-          "CurrentAccount",
-          "SavingsAccount",
-          "CellphoneNumber"
+          "SUCCESS",
+          "REJECTED"
         ]
       },
-      "BankCode": {
+      "MonnetPayoutStatus": {
         "type": "string",
         "enum": [
-          "PE-BBVA",
-          "PE-BCP",
-          "PE-INTER",
-          "PE-SCOTIA",
-          "PE-COMERCIO",
-          "PE-BANBIF",
-          "PE-PICHINCHA",
-          "PE-CITI",
-          "PE-GNB",
-          "PE-SANTANDER",
-          "PE-CENCOSUD",
-          "PE-ICBC",
-          "PE-NACION",
-          "PE-C.AREQUIPA",
-          "PE-C.CUSCO",
-          "PE-C.HUANCAYO",
-          "PE-C.MAYNAS",
-          "PE-C.METRO",
-          "PE-C.ICA",
-          "PE-C.SULLA",
-          "PE-C.TACNA",
-          "PE-C.TRUJI",
-          "PE-FALABELLA",
-          "PE-C.ANDES",
-          "PE-MIBANCO",
-          "PE-C.PIURA",
-          "PE-RIPLEY",
-          "PE-F.EFECTIVA",
-          "PE-YAPE",
-          "PE-F.COMPARTAMOS",
-          "PE-ALFIN",
-          "PE-PLIN",
-          "PE-C.ABACO",
-          "PE-LIGO",
-          "PE-F.CONFIANZA",
-          "PE-PREX",
-          "PE-T.OH",
-          "PE-CREDISCOTIA",
-          "PE-DALE"
+          "PROCESSED",
+          "REJECTED_BANK",
+          "BUSINESS_ERROR",
+          "NO_BALANCE",
+          "REVERSED"
         ]
+      },
+      "WebhookRequestBody": {
+        "type": "object",
+        "required": [
+          "payout",
+          "output"
+        ],
+        "properties": {
+          "payout": {
+            "$ref": "#/components/schemas/Payout"
+          },
+          "output": {
+            "$ref": "#/components/schemas/Output"
+          },
+          "errors": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
       }
     }
   }
